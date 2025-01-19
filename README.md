@@ -1,15 +1,20 @@
 # sexp_formatter
 
-![CI/CD Status Badge](https://github.com/mofosyne/sexp_formatter/actions/workflows/ci.yml/badge.svg)
+<versionBadge>![Version 0.1.1](https://img.shields.io/badge/version-0.1.1-blue.svg)</versionBadge>
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![C](https://img.shields.io/badge/Language-C-blue.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
+[![CI/CD Status Badge](https://github.com/mofosyne/sexp_formatter/actions/workflows/ci.yml/badge.svg)](https://github.com/mofosyne/sexp_prettify/actions)
 
 Prettifies KiCad-like S-expressions according to a KiCADv8-style formatting Via Python.
-This is both a cli program as well as a C/CPP/Python implementation library.
+
+This is primarily targeted at C but there is multiple implementations in
+C/CPP/Python as well that you can use for integration with your code.
 
 ```bash
-# Build sexp_prettify_cli 
+# Build sexp_prettify 
 make
 
-# Install sexp_prettify_cli as sexp_prettify system wide
+# Install sexp_prettify as sexp_prettify system wide
 make install
 
 # Remove sexp_prettify cli system wide
@@ -19,13 +24,13 @@ make uninstall
 make cicd
 ```
 
-Expected Help Message when running `sexp_prettify_cli`
+Expected Help Message when running `sexp_prettify`
 
 ```
 S-Expression Formatter (Brian Khuu 2024)
 
 Usage:
-  ./sexp_prettify_cli [OPTION]... SOURCE [DESTINATION]
+  ./sexp_prettify [OPTION]... SOURCE [DESTINATION]
   SOURCE             Source file path. If '-' then use standard stream input
   DESTINATION        Destination file path. If omitted or '-' then use standard stream output
 
@@ -39,7 +44,7 @@ Options:
 
 Example:
   - Use standard input and standard output. Also use KiCAD's standard compact list and shortform setting.
-    ./sexp_prettify_cli -l pts -s font -s stroke -s fill -s offset -s rotate -s scale - -
+    ./sexp_prettify -l pts -s font -s stroke -s fill -s offset -s rotate -s scale - -
 ```
 
 When integrating into your project, copy over `sexp_prettify.c` and `sexp_prettify.h` and use these functions:
@@ -55,6 +60,28 @@ typedef void (*PrettifySExprPutcFunc)(char c, void *context);
 void sexp_prettify(struct PrettifySExprState *state, const char c, PrettifySExprPutcFunc output_func, void *output_func_context);
 ```
 
+An example of how to use this C library in your project:
+
+First make a callback function
+
+```c
+  void putc_handler(char c, void *context_putc) { fputc(c, (FILE *)context_putc); }
+```
+
+Then implement this in your main program as a loop of this form
+
+```c
+  struct PrettifySExprState state = {0};
+  sexp_prettify_init(&state, PRETTIFY_SEXPR_KICAD_DEFAULT_INDENT_CHAR, PRETTIFY_SEXPR_KICAD_DEFAULT_INDENT_SIZE, PRETTIFY_SEXPR_KICAD_DEFAULT_CONSECUTIVE_TOKEN_WRAP_THRESHOLD);
+
+  int ch;
+  FILE *dst_file = stdout;
+  while ((ch = getc(message)) != EOF)
+  {
+    sexp_prettify(&state, ch, &putc_handler, dst_file);
+  }
+```
+
 ## Developer
 
 * Run `make` to build all the c and cpp binaries shown above.
@@ -63,11 +90,11 @@ void sexp_prettify(struct PrettifySExprState *state, const char c, PrettifySExpr
 
 ### About Files
 
-* sexp_prettify_cli.py             : This is a python implementation 
+* sexp_prettify.py             : This is a python implementation 
 * sexp_prettify_kicad_original_cli : This is a cpp original logic from the KiCAD repository as of 2024-12-03
 * sexp_prettify_kicad_cli          : This is the new cpp logic from the KiCAD repository being proposed for KiCAD
 * sexp_prettify_cpp_cli            : This is a cpp cli wrapper around the c function `sexp_prettify()` in `sexp_prettify.c/h`
-* sexp_prettify_cli                : This is a c cli wrapper around the c function `sexp_prettify()` in `sexp_prettify.c/h`
+* sexp_prettify                : This is a c cli wrapper around the c function `sexp_prettify()` in `sexp_prettify.c/h`
 
 ## History
 

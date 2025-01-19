@@ -7,7 +7,7 @@ executables=(
     "./sexp_prettify_kicad_original_cli"
     "./sexp_prettify_kicad_cli"
     "./sexp_prettify_cpp_cli"
-    "./sexp_prettify_cli"
+    "./sexp_prettify"
 )
 
 

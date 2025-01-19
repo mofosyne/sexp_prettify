@@ -1,25 +1,32 @@
 
-CFLAGS = -std=c99 -Wall -pedantic
+CFLAGS = -std=c99 -Wall -pedantic -Isrc
 PREFIX ?= /usr/local
 
-main: sexp_prettify_cli
+main: sexp_prettify readme_update
 
-all: sexp_prettify_cli sexp_prettify_cpp_cli sexp_prettify_kicad_cli sexp_prettify_kicad_original_cli
+all: sexp_prettify sexp_prettify_cpp_cli sexp_prettify_kicad_cli sexp_prettify_kicad_original_cli
 
-sexp_prettify_cli.o: sexp_prettify.c
-	$(CC) -c -o $@ $^
+src/sexp_prettify.o: src/sexp_prettify.c
+	$(CC) $(CFLAGS) -c -o $@ $^
 
-sexp_prettify_cli: sexp_prettify_cli.c sexp_prettify.o sexp_prettify.h
-	$(CC) -o $@ $^
+sexp_prettify: sexp_prettify_cli.c src/sexp_prettify.o
+	$(CC) $(CFLAGS) -o $@ $^
 
-sexp_prettify_cpp_cli: sexp_prettify_cpp_cli.cpp sexp_prettify.o sexp_prettify.h
-	$(CXX) -o $@ $^
+sexp_prettify_cpp_cli: sexp_prettify_cpp_cli.cpp src/sexp_prettify.o src/sexp_prettify.h
+	$(CXX) $(CFLAGS) -o $@ $^
 
 sexp_prettify_kicad_cli: sexp_prettify_kicad_cli.cpp
-	$(CXX) -o $@ $^
+	$(CXX) $(CFLAGS) -o $@ $^
 
 sexp_prettify_kicad_original_cli: sexp_prettify_kicad_original_cli.cpp
-	$(CXX) -o $@ $^
+	$(CXX) $(CFLAGS) -o $@ $^
+
+# Dev Note: $ is used by both make and AWK. Must escape $ for use in AWK within makefile.
+.PHONY: readme_update
+readme_update:
+	# Library Version (From clib package metadata)
+	jq -r '.version' clib.json | xargs -I{} sed -i 's|<version>.*</version>|<version>{}</version>|' README.md
+	jq -r '.version' clib.json | xargs -I{} sed -i 's|<versionBadge>.*</versionBadge>|<versionBadge>![Version {}](https://img.shields.io/badge/version-{}-blue.svg)</versionBadge>|' README.md
 
 .PHONY: install
 install: sexp_prettify_cli
